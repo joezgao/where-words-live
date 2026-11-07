@@ -4,16 +4,22 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Where Words Live</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23000'/%3E%3Ccircle cx='8' cy='8' r='3' fill='%23b9a5ff'/%3E%3C/svg%3E">
 <meta name="description" content="Skip-gram word2vec with negative sampling, trained from scratch in NumPy on tiny-shakespeare. The 3,000 most common words float in 3D; pick one to see its nearest neighbours.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap"></noscript>
 <style>
+@font-face{font-family:"Inter fallback";src:local("Arial"),local("ArialMT");size-adjust:106.8%;ascent-override:90.4%;descent-override:22.5%;line-gap-override:0%}
+@font-face{font-family:"Lora fallback";src:local("Georgia");size-adjust:105.1%}
+@font-face{font-family:"Lora fallback";font-style:italic;src:local("Georgia Italic"),local("Georgia-Italic");size-adjust:99.7%}
+/* fallbacks sized to Inter and Lora so text does not reflow when the web fonts arrive */
 :root{
   --bg:#000; --fg:#efefef; --dim:#8b8b8b; --mute:#5d5d5d; --faint:#3b3b3b; --line:#1c1c1c;
   --accent:#b9a5ff; --accent-soft:rgba(185,165,255,.13);
-  --serif:"Lora",Georgia,"Times New Roman",serif;
-  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  --serif:"Lora","Lora fallback",Georgia,"Times New Roman",serif;
+  --sans:"Inter","Inter fallback",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
   color-scheme:dark;
 }
 @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#000; --fg:#efefef; } }
@@ -44,7 +50,7 @@ h1{font-family:var(--serif);font-weight:400;font-style:italic;font-size:30px;let
 .read ol{list-style:none;margin:0;padding:0;counter-reset:n}
 .read li{counter-increment:n}
 .read li button{pointer-events:auto;display:grid;grid-template-columns:18px minmax(0,1fr) 54px 34px;align-items:center;gap:8px;width:100%;
-  padding:3px 0;margin:0;background:none;border:0;border-radius:4px;cursor:pointer;font:400 12.5px/1.35 var(--sans);color:var(--fg);text-align:left;letter-spacing:0}
+  min-height:24px;padding:3px 0;margin:0;background:none;border:0;border-radius:4px;cursor:pointer;font:400 12.5px/1.35 var(--sans);color:var(--fg);text-align:left;letter-spacing:0}
 .read li button::before{content:counter(n);font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums;text-align:right}
 .read li button:hover .nw,.read li button:focus-visible .nw{color:var(--accent)}
 .read .nw{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:color .2s}
@@ -53,6 +59,7 @@ h1{font-family:var(--serif);font-weight:400;font-style:italic;font-size:30px;let
 .read .cv{font-size:11px;color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
 .read .note{margin:10px 0 0;font-size:10.5px;line-height:1.5;color:var(--mute);letter-spacing:.02em}
 .read .note span{color:var(--dim)}
+.read:has(#rl:empty){visibility:hidden} /* nothing to show until a word is chosen; keeps the scrim from jumping */
 
 /* the controls dock, bottom centre */
 .dock{position:fixed;left:0;right:0;bottom:0;padding:0 max(32px,env(safe-area-inset-right)) max(26px,env(safe-area-inset-bottom)) max(32px,env(safe-area-inset-left));display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;z-index:3}
