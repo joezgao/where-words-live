@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Where Words Live</title>
+<meta name="description" content="Skip-gram word2vec with negative sampling, trained from scratch in NumPy on tiny-shakespeare. The {{vocab}} most common words float in 3D; pick one to see its nearest neighbours.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#000; --fg:#efefef; --dim:#8b8b8b; --mute:#5d5d5d; --faint:#3b3b3b; --line:#1c1c1c;
+  --accent:#b9a5ff; --accent-soft:rgba(185,165,255,.13);
+  --serif:"Lora",Georgia,"Times New Roman",serif;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;
+  color-scheme:dark;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){ --bg:#000; --fg:#efefef; } }
+:root[data-theme="dark"]{ --bg:#000; --fg:#efefef; }
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);overflow:hidden}
+body{font-family:var(--sans);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+#stage{position:fixed;inset:0;display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#stage.dragging{cursor:grabbing}
+#stage.over{cursor:pointer}
+header{position:fixed;top:0;left:0;right:0;padding:max(28px,env(safe-area-inset-top)) max(32px,env(safe-area-inset-right)) 0 max(32px,env(safe-area-inset-left));pointer-events:none;z-index:2;
+  display:flex;justify-content:space-between;align-items:flex-start;gap:24px}
+h1{font-family:var(--serif);font-weight:400;font-style:italic;font-size:30px;letter-spacing:-.01em;margin:0 0 12px;line-height:1.1}
+.caption{margin:0;max-width:480px;font-size:13px;line-height:1.62;color:var(--dim)}
+.caption b{color:var(--fg);font-weight:500}
+.meta{font-size:11px;letter-spacing:.04em;color:var(--mute);text-align:right;line-height:1.7;white-space:nowrap;font-variant-numeric:tabular-nums}
+.meta span{color:var(--dim)}
+.made{position:relative;pointer-events:auto;font:inherit;letter-spacing:inherit;color:var(--mute);background:none;border:0;padding:0;margin-top:4px;cursor:pointer;
+  border-radius:0;text-decoration:underline;text-decoration-color:#2e2e2e;text-underline-offset:3px;transition:color .25s}
+.made::after{content:"";position:absolute;inset:-13px -8px}
+.made:hover,.made[aria-expanded="true"]{color:var(--fg)}
+
+/* the neighbour readout, bottom-left */
+.read{position:fixed;left:max(32px,env(safe-area-inset-left));bottom:max(26px,env(safe-area-inset-bottom));width:260px;z-index:2;pointer-events:none}
+.read .w{margin:0;font:italic 400 28px/1.1 var(--serif);color:var(--accent);letter-spacing:-.01em;overflow-wrap:anywhere}
+.read .f{margin:4px 0 12px;font-size:11px;letter-spacing:.04em;color:var(--mute);font-variant-numeric:tabular-nums}
+.read .f span{color:var(--dim)}
+.read ol{list-style:none;margin:0;padding:0;counter-reset:n}
+.read li{counter-increment:n}
+.read li button{pointer-events:auto;display:grid;grid-template-columns:18px minmax(0,1fr) 54px 34px;align-items:center;gap:8px;width:100%;
+  padding:3px 0;margin:0;background:none;border:0;border-radius:4px;cursor:pointer;font:400 12.5px/1.35 var(--sans);color:var(--fg);text-align:left;letter-spacing:0}
+.read li button::before{content:counter(n);font-size:10px;color:var(--faint);font-variant-numeric:tabular-nums;text-align:right}
+.read li button:hover .nw,.read li button:focus-visible .nw{color:var(--accent)}
+.read .nw{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:color .2s}
+.read .bar{height:2px;background:#1e1e1e;border-radius:1px;position:relative;overflow:hidden}
+.read .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);opacity:.8}
+.read .cv{font-size:11px;color:var(--dim);text-align:right;font-variant-numeric:tabular-nums}
+.read .note{margin:10px 0 0;font-size:10.5px;line-height:1.5;color:var(--mute);letter-spacing:.02em}
+.read .note span{color:var(--dim)}
+
+/* the controls dock, bottom centre */
+.dock{position:fixed;left:0;right:0;bottom:0;padding:0 max(32px,env(safe-area-inset-right)) max(26px,env(safe-area-inset-bottom)) max(32px,env(safe-area-inset-left));display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;z-index:3}
+.find{pointer-events:auto;position:relative;display:flex;align-items:center;gap:8px}
+.find input{font:400 13px/1 var(--sans);letter-spacing:.01em;color:var(--fg);background:rgba(10,10,10,.85);border:0;border-radius:999px;
+  box-shadow:inset 0 0 0 1px #2a2a2a;padding:11px 16px;width:240px;outline:0;transition:box-shadow .25s}
+.find input::placeholder{color:var(--mute)}
+.find input:focus{box-shadow:inset 0 0 0 1px var(--accent)}
+.find input::-webkit-search-cancel-button{-webkit-appearance:none}
+button{font:500 13px/1 var(--sans);letter-spacing:.02em;border:0;border-radius:999px;cursor:pointer;padding:11px 18px;
+  transition:opacity .25s,color .25s,background .25s,box-shadow .25s}
+#go{color:#000;background:var(--accent)}
+#go:hover{opacity:.88}
+.sug{position:absolute;left:0;bottom:calc(100% + 6px);width:240px;margin:0;padding:4px;list-style:none;background:rgba(10,10,10,.96);
+  border:1px solid #1f1f1f;border-radius:12px;display:none}
+.sug.on{display:block}
+.sug li{padding:7px 12px;border-radius:8px;font-size:12.5px;color:var(--dim);cursor:pointer;display:flex;justify-content:space-between;gap:12px}
+.sug li span{color:var(--faint);font-size:11px;font-variant-numeric:tabular-nums}
+.sug li[aria-selected="true"],.sug li:hover{background:var(--accent-soft);color:var(--accent)}
+.msg{position:absolute;left:16px;bottom:calc(100% + 8px);font-size:11.5px;color:var(--dim);white-space:nowrap;opacity:0;transition:opacity .3s}
+.msg.on{opacity:1}
+.chips{pointer-events:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:center;align-items:center}
+.chips .lbl{font-size:11px;letter-spacing:.04em;color:var(--mute);margin-right:4px}
+.chip{font:500 12px/1 var(--sans);padding:8px 10px;color:var(--dim);background:none}
+.chip:hover{color:var(--fg)}
+.chip[aria-pressed="true"]{color:var(--accent);background:var(--accent-soft)}
+:focus-visible{outline:1px solid var(--accent);outline-offset:2px}
+
+/* labels in the 3D view */
+#labels{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.lab{position:absolute;left:0;top:0;white-space:nowrap;font:400 10.5px/1 var(--sans);letter-spacing:.03em;color:#6b6b6b;
+  text-shadow:0 0 3px #000,0 0 6px #000;will-change:transform;transform:translate(-999px,-999px)}
+.lab.nb{color:#d6d6d6;font-size:11.5px}
+.lab.sel{font:italic 400 17px/1 var(--serif);color:var(--accent);letter-spacing:0}
+.lab.hov{color:var(--fg);font-size:12px}
+
+.panel{position:fixed;top:max(24px,env(safe-area-inset-top));right:max(24px,env(safe-area-inset-right));width:min(420px,calc(100% - 32px));max-height:calc(100% - 48px);overflow:auto;
+  padding:22px 24px 20px;background:rgba(8,8,8,.94);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid #1f1f1f;border-radius:12px;opacity:0;transform:translateY(-4px);pointer-events:none;visibility:hidden;
+  transition:opacity .3s,transform .3s,visibility 0s linear .3s;z-index:5;overscroll-behavior:contain}
+.panel.on{opacity:1;transform:none;pointer-events:auto;visibility:visible;transition:opacity .3s,transform .3s}
+.panel h2{margin:0 0 4px;font:italic 400 20px/1.2 var(--serif);color:var(--fg);outline:0}
+.panel h3{margin:16px 0 4px;font:500 10.5px/1.3 var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.panel p{margin:0 0 6px;font-size:12.5px;line-height:1.6;color:var(--dim)}
+.panel p b{color:var(--fg);font-weight:500}
+.panel p i{color:var(--fg)}
+.panel .eq{font:italic 400 14px/1.5 var(--serif);color:var(--fg);margin:6px 0 8px;padding-left:12px;border-left:1px solid #2a2a2a}
+.panel table{width:100%;border-collapse:collapse;font-size:11.5px;font-variant-numeric:tabular-nums;margin:4px 0 8px}
+.panel th{font-weight:500;color:var(--mute);text-align:right;padding:4px 0 5px;border-bottom:1px solid #1c1c1c}
+.panel td{color:var(--dim);text-align:right;padding:3px 0;border-bottom:1px solid #121212}
+.panel th:first-child,.panel td:first-child{text-align:left}
+.panel td.hit{color:var(--accent)}
+.panel .refs p{font-size:11.5px}
+.panel .keys{font-size:11.5px;color:var(--mute)}
+.panel kbd{font:500 10.5px var(--sans);color:var(--dim);border:1px solid #2a2a2a;border-radius:4px;padding:1px 5px}
+.panel .close{position:absolute;top:7px;right:7px;width:44px;height:44px;padding:0;font-size:17px;line-height:44px;color:var(--mute);background:none}
+.panel .close:hover{color:var(--fg)}
+.panel .credit{margin:14px 0 0;padding-top:10px;border-top:1px solid #161616;font:italic 400 12.5px/1.4 var(--serif);color:#8e8e8e}
+.fallback{position:fixed;inset:0;display:none;place-items:center;color:var(--dim);font-size:13px;line-height:1.6;padding:32px 16px;text-align:center;pointer-events:none}
+.nogl .dock,.nogl .read,.nogl #labels{display:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:1100px){
+  .read{width:230px}
+}
+@media (max-width:720px){
+  header{padding:18px 16px 0;flex-direction:column;gap:4px}
+  h1{font-size:25px;margin-bottom:8px}
+  .caption{font-size:12.5px;line-height:1.55;max-width:none}
+  .caption .wide{display:none}
+  .meta{text-align:left;white-space:normal;font-size:10.5px;display:flex;gap:0 12px;flex-wrap:wrap;align-items:baseline}
+  .meta .wide{display:none}
+  #meta{display:contents}
+  .made{margin-top:0}
+  .read{left:max(16px,env(safe-area-inset-left));right:max(16px,env(safe-area-inset-right));width:auto;bottom:calc(var(--dock-h,92px) + 10px)}
+  .read::before{content:"";position:absolute;left:-16px;right:-16px;top:-36px;bottom:-140px;z-index:-1;pointer-events:none;
+    background:linear-gradient(to bottom,rgba(0,0,0,0),rgba(0,0,0,.9) 36px)}
+  .read .w{font-size:22px;display:inline}
+  .read .f{display:inline;margin:0 0 0 8px}
+  .read ol{display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(5,auto);gap:0 16px;margin-top:6px}
+  .read li button{grid-template-columns:14px minmax(0,1fr) 30px;gap:6px;font-size:12px;padding:2px 0}
+  .read .bar{display:none}
+  .read .note{display:none}
+  .dock{padding:0 max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));gap:8px}
+  .chips{flex-wrap:nowrap;overflow-x:auto;max-width:100%;justify-content:flex-start;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .find input{width:calc(100vw - 32px - 70px);min-width:0}
+  .sug{width:100%}
+  button{padding:10px 13px;font-size:12.5px}
+  .find input{padding:10px 14px;font-size:16px}
+  .chips .lbl{display:none}
+  .chip{padding:8px 9px}
+  .lab{font-size:10px}
+  .panel{top:auto;bottom:max(16px,env(safe-area-inset-bottom));right:max(16px,env(safe-area-inset-right));max-height:min(78%,calc(100% - 32px))}
+}
+@media (max-width:360px){
+  .chip{padding:8px 7px}
+}
+/* landscape phones: wide but short. Title and meta on top, the list under the title, the dock at the bottom */
+@media (max-height:500px) and (min-width:721px){
+  header{padding-top:max(14px,env(safe-area-inset-top));padding-left:max(24px,env(safe-area-inset-left));padding-right:max(24px,env(safe-area-inset-right))}
+  h1{font-size:22px;margin:0}
+  .caption{display:none}
+  .meta{line-height:1.55}
+  .read{left:max(24px,env(safe-area-inset-left));top:calc(max(14px,env(safe-area-inset-top)) + 38px);bottom:auto;width:300px}
+  .read .w{font-size:20px;display:inline}
+  .read .f{display:inline;margin:0 0 0 8px}
+  .read ol{display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(5,auto);gap:0 16px;margin-top:4px}
+  .read li button{grid-template-columns:14px minmax(0,1fr) 30px;gap:6px;font-size:12px;padding:2px 0}
+  .read .bar,.read .note{display:none}
+  .dock{padding-bottom:max(12px,env(safe-area-inset-bottom));gap:6px}
+  .panel{top:max(12px,env(safe-area-inset-top));max-height:calc(100% - 24px)}
+}
+/* touch: taller neighbour rows, so each is easier to hit */
+@media (pointer:coarse){
+  .read li button{min-height:30px}
+}
+@media (pointer:coarse) and (max-height:620px) and (max-width:720px){
+  .read li button{min-height:26px}
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+</style>
+</head>
+<body>
+<canvas id="stage" aria-label="3D cloud of {{vocab}} words from Shakespeare, placed by a word2vec model; lines join the chosen word to its nearest neighbours"></canvas>
+<div id="labels" aria-hidden="true"></div>
+<header>
+  <div>
+    <h1>Where words live</h1>
+    <p class="caption">
+      Each dot is one of the <b>{{vocab}} most common words</b> in tiny-shakespeare. A small model, trained from scratch, placed them by guessing which words turn up near each other, so words used in the same company end up close.
+      <span class="wide">Pick a word to see its ten nearest neighbours. They are measured in all {{dim}} dimensions; this 3D view is only a shadow, so some lines run long.</span>
+    </p>
+  </div>
+  <div class="meta"><div id="meta"></div><button class="made" id="made" aria-expanded="false" aria-controls="panel">How it works</button></div>
+</header>
+
+<section class="read" id="read" aria-live="polite" aria-label="Nearest neighbours">
+  <p class="w" id="rw"></p>
+  <p class="f" id="rf"></p>
+  <ol id="rl"></ol>
+  <p class="note" id="rn"></p>
+</section>
+
+<div class="panel" id="panel" role="dialog" aria-modal="false" aria-labelledby="panel-h">
+  <button class="close" id="close" aria-label="Close">&times;</button>
+  <h2 id="panel-h" tabindex="-1">How it works</h2>
+  <div id="panel-body"></div>
+  <p class="credit">Built with Claude for Joe Gao.</p>
+</div>
+
+<div class="dock">
+  <form class="find" id="find" role="search" autocomplete="off">
+    <span class="msg" id="msg" aria-live="polite"></span>
+    <ul class="sug" id="sug" role="listbox" aria-label="Matching words"></ul>
+    <label class="sr" for="q">Find a word</label>
+    <input id="q" type="search" placeholder="Find a word" spellcheck="false" autocapitalize="off" autocorrect="off"
+      role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="sug">
+    <button id="go" type="submit">Find</button>
+  </form>
+  <div class="chips" id="chips"><span class="lbl">Try</span></div>
+</div>
+<div class="fallback" id="fallback">This piece needs WebGL, which this browser has turned off.</div>
+
+<script type="application/json" id="data">/*DATA*/</script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script>
+(() => {
+'use strict';
+const $ = (id) => document.getElementById(id);
+const DATA = JSON.parse($('data').textContent);
+const ST = DATA.stats;
+const W = DATA.words, N = W.length, D = DATA.dim;
+const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fmt = (n) => n.toLocaleString('en-US');
+const pct = (x, d = 1) => (x * 100).toFixed(d) + '%';
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const INDEX = new Map(W.map((w, i) => [w, i]));
+
+// ---------------------------------------------------------------- vectors (float16 -> float64, then unit length)
+function bytes(b64) { const s = atob(b64), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u.buffer; }
+function half(h) {
+  const s = (h & 0x8000) ? -1 : 1, e = (h >> 10) & 31, f = h & 1023;
+  if (e === 0) return s * Math.pow(2, -14) * (f / 1024);
+  if (e === 31) return f ? NaN : s * Infinity;
+  return s * Math.pow(2, e - 15) * (1 + f / 1024);
+}
+const raw = new Uint16Array(bytes(DATA.vec));
+const VEC = new Float64Array(N * D);
+for (let i = 0; i < N; i++) {
+  let n = 0;
+  for (let d = 0; d < D; d++) { const v = half(raw[i * D + d]); VEC[i * D + d] = v; n += v * v; }
+  n = Math.sqrt(n) || 1;
+  for (let d = 0; d < D; d++) VEC[i * D + d] /= n;
+}
+const praw = new Uint16Array(bytes(DATA.pos));
+const R = 6;   // scene radius
+const POS = new Float32Array(N * 3);
+for (let i = 0; i < N * 3; i++) POS[i] = half(praw[i]) * R;
+
+// cosine neighbours in the full 48-d space (same rule as w2v.neighbours: by score, ties by index)
+function neighbours(i, k = 10) {
+  const s = new Float64Array(N), o = i * D;
+  for (let j = 0; j < N; j++) { let a = 0; const p = j * D; for (let d = 0; d < D; d++) a += VEC[o + d] * VEC[p + d]; s[j] = a; }
+  s[i] = -Infinity;
+  const idx = Array.from({ length: N }, (_, j) => j);
+  idx.sort((a, b) => (s[b] - s[a]) || (a - b));
+  return idx.slice(0, k).map((j) => [j, s[j]]);
+}
+
+// ---------------------------------------------------------------- text from the training log
+$('meta').innerHTML = [
+  `skip-gram · negative sampling`,
+  `<span>${fmt(ST.corpus.vocab)}</span> words · <span>${ST.corpus.dim}</span> dimensions`,
+  `<span>${fmt(ST.corpus.tokens)}</span> words of text · <span>${ST.train.epochs}</span> passes`,
+  `<span class="wide">3D: PCA, keeps <span>${pct(ST.pca.var3, 0)}</span> of the variance</span>`,
+].map((l) => `<div>${l}</div>`).join('');
+
+const an = ST.analogies;
+const kmw = an.find((a) => a.q[1] === 'king' && a.q[2] === 'woman');
+const e3 = ST.pca.ends, G = ST.pca.group;
+const list = (a, n = 5) => a.slice(0, n).map((w) => `<i>${esc(w)}</i>`).join(', ');
+const ord = (n) => n + (n % 10 === 1 && n % 100 !== 11 ? 'st' : n % 10 === 2 && n % 100 !== 12 ? 'nd' : n % 10 === 3 && n % 100 !== 13 ? 'rd' : 'th');
+// the two earlier training runs (run 1: embed/train/summary.json; run 2: see CHANGES.md); run 3 is ST
+const PRIOR = { hits: [2, 1], queen: [49, 6] };
+$('panel-body').innerHTML = `
+<h3>The game it plays</h3>
+<p>Every word gets two lists of ${ST.corpus.dim} numbers: one for when it is the word in the middle, one for when it is a neighbour. For each word in the text, the model looks at the words up to ${ST.train.window} places either side and tries to score those real pairs high. For every real pair it also draws ${ST.train.neg} random words and tries to score them low. That is skip-gram with negative sampling, and the loss for one pair is</p>
+<p class="eq">L = −log σ(u<sub>o</sub>·v<sub>c</sub>) − Σ<sub>k</sub> log σ(−u<sub>k</sub>·v<sub>c</sub>)</p>
+<p>The only way to win is to give words that share neighbours similar vectors. The dots are the middle-word vectors, scaled to length 1.</p>
+<h3>Training</h3>
+<p>The text is tiny-shakespeare: <b>${fmt(ST.corpus.tokens)}</b> words once the speaker names ("ROMEO:") and a repeated page header are taken out. The <b>${fmt(ST.corpus.vocab)}</b> most common words cover ${pct(ST.corpus.coverage)} of it; the rarest kept word appears ${ST.corpus.min_count} times. Very common words are randomly thinned (t = ${ST.train.sample}), leaving about ${fmt(ST.train.kept_per_epoch)} words per pass. ${ST.train.epochs} passes, ${fmt(ST.train.pairs)} pairs, learning rate ${ST.train.lr} falling to 0, batches of ${ST.train.batch}, seed ${ST.train.seed}: ${Math.round(ST.train.seconds)} seconds on a CPU in NumPy.</p>
+<p>The gradients are written out by hand and checked against finite differences on a tiny case (largest relative error ${ST.gradcheck.rel_err_in.toExponential(1)}).</p>
+<p>On the last 5% of the text, which training never saw, the loss per pair fell from <b>${ST.train.held_loss_init.toFixed(3)}</b> (knowing nothing: ${ST.train.neg + 1}·ln 2) to <b>${ST.train.held_loss_final.toFixed(3)}</b>. Almost all of that came in the first pass (${ST.train.held_loss_ep1.toFixed(3)}); later passes moved it very little.</p>
+<h3>The 3D view</h3>
+<p>The ${ST.corpus.dim}-d vectors are squashed to 3D with PCA. The three axes keep only <b>${pct(ST.pca.var3)}</b> of the variance (${ST.pca.var_each.map((v) => pct(v)).join(', ')}), so distances in this view are badly distorted. The neighbours and their lines come from cosine similarity in the full ${ST.corpus.dim} dimensions, never from the 3D positions.</p>
+<p>Some of the widest spreads follow the plays. One end of the first axis holds ${list(e3[0].low)}, led by names from <i>The Taming of the Shrew</i> and <i>Measure for Measure</i>. One end of the third holds ${list(e3[2].high)}: the Rome of <i>${esc(e3[2].high_group.play)}</i>. One end of the second holds ${list(e3[1].high)}, words of the English history plays, most concentrated in <i>${esc(e3[1].high_group.play)}</i>. The other end of the third axis (${list(e3[2].low, 3)}) leans toward <i>${esc(e3[2].low_group.play)}</i>. Only two ends look mixed (${list(e3[0].high, 3)}; ${list(e3[1].low, 3)}).</p>
+<p>The check: the plays sit one after another in the file, so for each group of 8 words, find the tenth of the text that holds the largest share of their uses. For random groups of 8 words that share averages ${pct(G.random_mean, 0)}, and only 1 group in 100 passes ${pct(G.random_p99, 0)}. The <i>Shrew</i>, <i>Coriolanus</i>, history and <i>Romeo and Juliet</i> ends reach ${pct(e3[0].low_group.share, 0)}, ${pct(e3[2].high_group.share, 0)}, ${pct(e3[1].high_group.share, 0)} and ${pct(e3[2].low_group.share, 0)}; the two mixed ends ${pct(e3[0].high_group.share, 0)} and ${pct(e3[1].low_group.share, 0)}. An earlier version measured each word on its own, which understated groups whose words also turn up elsewhere.</p>
+<h3>What it gets, and what it misses</h3>
+<p>Probe words and analogies were chosen before training and not changed after. The model was trained three times with the same settings and seed; the second fixed a text-cleaning mistake an audit found, the third removed a repeated page header, and every number here is from the third. Neighbours often make sense (<i>romeo</i> sits by <i>tybalt</i>, <i>juliet</i>, <i>mercutio</i>), but plenty of them are noise. The famous analogy test mostly fails on a text this small: <b>${ST.analogy_hits} of ${ST.analogy_total}</b> hit.${kmw ? ` For <i>king − man + woman</i>, <i>queen</i> comes ${ord(kmw.rank)}. Across the three runs the hits went ${PRIOR.hits.join(', ')}, ${ST.analogy_hits} and <i>queen</i> came ${PRIOR.queen.map(ord).join(', ')} and ${ord(kmw.rank)}, and from one run to the next 4 to 5 of a probe's 10 neighbours changed on average, so read any one list as a sample.` : ''}</p>
+<table><thead><tr><th>b − a + c</th><th>top answer</th><th>rank of target</th></tr></thead><tbody>
+${an.map((a) => `<tr><td>${esc(a.q[1])} − ${esc(a.q[0])} + ${esc(a.q[2])} → ${esc(a.q[3])}</td><td>${esc(a.top5[0])}</td><td class="${a.hit ? 'hit' : ''}">${a.rank}</td></tr>`).join('')}
+</tbody></table>
+<p>Read the cosines as ranks, not as absolute closeness: all the vectors lean in one shared direction, so two random words already score <b>${ST.cos.random_mean.toFixed(2)}</b> on average, and a typical word's 10th neighbour scores ${ST.cos.tenth_nn_median.toFixed(2)}.</p>
+<p>The vectors ship as 16-bit floats. Against full precision, ${fmt(ST.fp16.lists_unchanged)} of ${fmt(ST.corpus.vocab)} top-10 lists are identical and ${fmt(ST.fp16.lists_one_swap)} swap one word.</p>
+<h3>Credits</h3>
+<div class="refs">
+<p>Tomas Mikolov, Kai Chen, Greg Corrado, Jeffrey Dean. <i>Efficient Estimation of Word Representations in Vector Space.</i> 2013. arXiv:1301.3781.</p>
+<p>Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg Corrado, Jeffrey Dean. <i>Distributed Representations of Words and Phrases and their Compositionality.</i> 2013. arXiv:1310.4546. (Negative sampling and the thinning of common words.)</p>
+<p>Text: tiny-shakespeare, from Andrej Karpathy's char-rnn. Drawn with three.js.</p>
+</div>
+<p class="keys"><kbd>/</kbd> find a word · drag to turn · scroll or pinch to zoom · <kbd>Esc</kbd> closes this</p>`;
+
+// ---------------------------------------------------------------- panel
+const panel = $('panel'), made = $('made');
+function setPanel(on) {
+  panel.classList.toggle('on', on); made.setAttribute('aria-expanded', String(on));
+  if (on) $('panel-h').focus({ preventScroll: true }); else if (panel.contains(document.activeElement)) made.focus();
+}
+made.addEventListener('click', (e) => { e.stopPropagation(); setPanel(!panel.classList.contains('on')); });
+$('close').addEventListener('click', () => setPanel(false));
+addEventListener('pointerdown', (e) => { if (panel.classList.contains('on') && !panel.contains(e.target) && e.target !== made) setPanel(false); });
+addEventListener('keydown', (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'Escape' && panel.classList.contains('on')) { setPanel(false); return; }
+  const tag = e.target && e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+  if (e.key === '/') { if (document.body.classList.contains('nogl')) return; e.preventDefault(); $('q').focus(); $('q').select(); }
+  else if (e.key.toLowerCase() === 'h') setPanel(!panel.classList.contains('on'));
+});
+
+// ---------------------------------------------------------------- three.js scene
+// The text above works without three.js; the 3D view does not. If three.js did not arrive from
+// its CDN, or WebGL is off, say so quietly and keep the header and How it works.
+const canvas = $('stage');
+function fail(text) { $('fallback').textContent = text; $('fallback').style.display = 'grid'; canvas.style.display = 'none'; document.body.classList.add('nogl'); }
+if (typeof THREE === 'undefined') { fail('The 3D view could not load: three.js, fetched from a CDN, did not arrive. Reloading may help.'); return; }
+const ACCENT = new THREE.Color(0xb9a5ff);
+let renderer;
+try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false }); }
+catch (e) { fail('This piece needs WebGL, which this browser has turned off.'); return; }
+const DPR = Math.min(devicePixelRatio || 1, 2);
+renderer.setPixelRatio(DPR);
+renderer.setClearColor(0x000000, 1);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 200);
+
+const counts = DATA.counts, maxLog = Math.log(counts[0]), minLog = Math.log(counts[N - 1]);
+const sizeA = new Float32Array(N), stateA = new Float32Array(N);
+for (let i = 0; i < N; i++) sizeA[i] = 0.8 + 1.7 * (Math.log(counts[i]) - minLog) / (maxLog - minLog);
+const geo = new THREE.BufferGeometry();
+geo.setAttribute('position', new THREE.BufferAttribute(POS, 3));
+geo.setAttribute('size', new THREE.BufferAttribute(sizeA, 1));
+geo.setAttribute('state', new THREE.BufferAttribute(stateA, 1));
+const mat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false,
+  uniforms: { uScale: { value: 1 }, uAccent: { value: ACCENT }, uDim: { value: 0 }, uFocus: { value: new THREE.Vector3() } },
+  vertexShader: `
+    attribute float size; attribute float state;
+    uniform float uScale; uniform float uDim;
+    varying float vState; varying float vAlpha;
+    void main(){
+      vec4 mv = modelViewMatrix * vec4(position, 1.0);
+      float boost = state > 1.5 ? 2.6 : (state > 0.5 ? 1.7 : 1.0);
+      gl_PointSize = max(1.5, size * boost * uScale / -mv.z);
+      gl_Position = projectionMatrix * mv;
+      float depth = clamp((-mv.z - 5.0) / 14.0, 0.0, 1.0);
+      vAlpha = mix(1.0, 0.42, depth);
+      if (state < 0.5) vAlpha *= mix(1.0, 0.6, uDim);
+      vState = state;
+    }`,
+  fragmentShader: `
+    uniform vec3 uAccent; varying float vState; varying float vAlpha;
+    void main(){
+      vec2 p = gl_PointCoord - 0.5; float r = length(p);
+      float a = smoothstep(0.5, 0.36, r);
+      if (a <= 0.0) discard;
+      vec3 grey = vec3(0.74);
+      vec3 c = vState > 1.5 ? mix(uAccent, vec3(1.0), smoothstep(0.22, 0.0, r) * 0.6) : (vState > 0.5 ? uAccent : grey);
+      gl_FragColor = vec4(c, a * vAlpha);
+    }`,
+});
+const points = new THREE.Points(geo, mat);
+scene.add(points);
+
+// lines from the chosen word to its neighbours; brighter = higher cosine
+const lineGeo = new THREE.BufferGeometry();
+const linePos = new Float32Array(10 * 2 * 3), lineCol = new Float32Array(10 * 2 * 3);
+lineGeo.setAttribute('position', new THREE.BufferAttribute(linePos, 3));
+lineGeo.setAttribute('color', new THREE.BufferAttribute(lineCol, 3));
+const lines = new THREE.LineSegments(lineGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending }));
+lines.visible = false;
+scene.add(lines);
+
+// ---------------------------------------------------------------- camera: a small orbit
+const target = new THREE.Vector3(), goal = new THREE.Vector3();
+let az = 0.6, el = 0.32, dist = 11.5, distGoal = 11.5;
+let idleSince = performance.now(), lastFrame = performance.now();
+function place() {
+  camera.position.set(target.x + dist * Math.cos(el) * Math.sin(az), target.y + dist * Math.sin(el), target.z + dist * Math.cos(el) * Math.cos(az));
+  camera.lookAt(target);
+}
+let vw = 1, vh = 1, mobile = false, wasMobile = false;
+function resize() {
+  vw = innerWidth; vh = innerHeight; mobile = vw <= 720;
+  renderer.setSize(vw, vh, false);
+  camera.aspect = vw / vh;
+  // keep the cloud inside the free middle of the screen on a phone
+  camera.fov = mobile ? 58 : 45;
+  camera.setViewOffset(vw, vh, mobile ? 0 : -vw * 0.03, mobile ? vh * 0.07 : 0, vw, vh);
+  if (mobile !== wasMobile) { dist = distGoal = mobile ? 14 : 11.5; wasMobile = mobile; }
+  camera.updateProjectionMatrix();
+  mat.uniforms.uScale.value = vh * DPR * (mobile ? 0.034 : 0.03);
+  widths.clear();
+  measureBlocked();
+  dirty = true;
+}
+let dirty = true;
+
+// ---------------------------------------------------------------- labels
+const labels = $('labels');
+const PROBES = ['king', 'love', 'night', 'romeo', 'thou', 'sword'];   // the six named in the brief, all pre-registered probes
+const LANDMARKS = DATA.probes.filter((w) => INDEX.has(w)).map((w) => INDEX.get(w));
+const labPool = [];
+function lab(i) { let el = labPool[i]; if (!el) { el = document.createElement('div'); el.className = 'lab'; labels.appendChild(el); labPool[i] = el; } return el; }
+let shown = [];   // [index, kind]
+const v3 = new THREE.Vector3();
+function project(i, out) {
+  v3.set(POS[i * 3], POS[i * 3 + 1], POS[i * 3 + 2]).project(camera);
+  out[0] = (v3.x * 0.5 + 0.5) * vw; out[1] = (-v3.y * 0.5 + 0.5) * vh; out[2] = v3.z;
+  return out;
+}
+const tmp = [0, 0, 0];
+// label sizes, measured once per (kind, word) with the label's own font
+const meas = document.createElement('canvas').getContext('2d'), widths = new Map();
+const measEl = document.createElement('div'); measEl.style.visibility = 'hidden'; labels.appendChild(measEl);
+function labSize(kind, w) {
+  const key = kind + '|' + w;
+  if (!widths.has(key)) {
+    measEl.className = 'lab ' + kind; const cs = getComputedStyle(measEl);
+    meas.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+    widths.set(key, [meas.measureText(w).width + 2, parseFloat(cs.fontSize) + 2]);
+  }
+  return widths.get(key);
+}
+const hit = (a, b) => a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];
+// labels keep a small gap from each other, so two never read as one word
+const near = (a, b) => a[0] < b[0] + b[2] + 4 && b[0] < a[0] + a[2] + 4 && a[1] < b[1] + b[3] + 2 && b[1] < a[1] + a[3] + 2;
+// text and controls that labels must not print over (title, caption, meta, the list, the dock).
+// Measured on resize, on selection and when fonts arrive; hidden elements measure 0 and block nothing.
+let blocked = [];
+const BLOCK = ['h1', '.caption', '.meta', '#read', '.find', '.chips'];
+function measureBlocked() {
+  blocked = [];
+  for (const q of BLOCK) {
+    const e = document.querySelector(q); if (!e) continue;
+    const r = e.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) blocked.push([r.left - 4, r.top - 3, r.width + 8, r.height + 6]);
+  }
+  const dock = document.querySelector('.dock');
+  if (dock) document.documentElement.style.setProperty('--dock-h', dock.getBoundingClientRect().height + 'px');
+}
+const free = (b) => !blocked.some((o) => hit(b, o));
+// shown is in priority order (chosen word, neighbours, hover, landmarks). Each label tries a few
+// spots around its dot; landmarks that would overlap anything already placed are left out.
+function drawLabels() {
+  let k = 0; const boxes = [];
+  for (const [i, kind] of shown) {
+    project(i, tmp);
+    if (tmp[2] > 1 || tmp[2] < -1) continue;
+    const [w, h] = labSize(kind, W[i]), g = kind === 'sel' ? 10 : 7, x = tmp[0], y = tmp[1];
+    // right, left, above, below first (as before), then the diagonals and one row further out
+    const spots = [[x + g, y - h / 2], [x - g - w, y - h / 2], [x - w / 2, y - h - g + 2], [x - w / 2, y + g - 2],
+      [x + g - 2, y - h - 2], [x - g - w + 2, y - h - 2], [x + g - 2, y + 2], [x - g - w + 2, y + 2],
+      [x + g, y - h * 1.5 - 4], [x - g - w, y - h * 1.5 - 4], [x + g, y + h / 2 + 4], [x - g - w, y + h / 2 + 4]];
+    const cand = spots.map(([sx, sy]) => [Math.max(4, Math.min(vw - w - 4, sx)), sy, w, h]).filter(free);
+    let box = cand.find((b) => !boxes.some((o) => near(b, o))) || null;
+    if (!box) {   // no clean spot: landmarks are dropped; the chosen word and neighbours take the least-covered spot
+      if (kind === '' || !cand.length) continue;
+      const cover = (b) => boxes.reduce((t, o) => t + Math.max(0, Math.min(b[0] + b[2] + 4, o[0] + o[2]) - Math.max(b[0] - 4, o[0])) * Math.max(0, Math.min(b[1] + b[3] + 2, o[1] + o[3]) - Math.max(b[1] - 2, o[1])), 0);
+      box = cand.reduce((a, b) => (cover(b) < cover(a) ? b : a));
+    }
+    boxes.push(box);
+    const el = lab(k++);
+    if (el.textContent !== W[i]) el.textContent = W[i];
+    if (el.dataset.k !== kind) { el.className = 'lab ' + kind; el.dataset.k = kind; }
+    el.style.transform = `translate(${box[0].toFixed(1)}px,${box[1].toFixed(1)}px)`;
+  }
+  for (; k < labPool.length; k++) if (labPool[k]) labPool[k].style.transform = 'translate(-999px,-999px)';
+}
+function rebuildShown() {
+  const seen = new Set(); shown = [];
+  if (sel >= 0) { shown.push([sel, 'sel']); seen.add(sel); for (const [j] of nbrs) { shown.push([j, 'nb']); seen.add(j); } }
+  if (hover >= 0 && !seen.has(hover)) { shown.push([hover, 'hov']); seen.add(hover); }
+  for (const j of LANDMARKS) if (!seen.has(j)) shown.push([j, '']);
+}
+
+// ---------------------------------------------------------------- selection
+let sel = -1, nbrs = [], hover = -1, tweenT = 1, tweenFrom = new THREE.Vector3();
+const rw = $('rw'), rf = $('rf'), rl = $('rl'), rn = $('rn');
+function select(i, fly = true) {
+  if (sel >= 0) stateA[sel] = 0;
+  for (const [j] of nbrs) stateA[j] = 0;
+  sel = i; nbrs = i >= 0 ? neighbours(i) : [];
+  for (const [j] of nbrs) stateA[j] = 1;
+  if (i >= 0) stateA[i] = 2;
+  geo.attributes.state.needsUpdate = true;
+  mat.uniforms.uDim.value = i >= 0 ? 1 : 0;
+  // lines
+  if (i >= 0) {
+    const c = new THREE.Color();
+    nbrs.forEach(([j, s], k) => {
+      for (let a = 0; a < 3; a++) { linePos[k * 6 + a] = POS[i * 3 + a]; linePos[k * 6 + 3 + a] = POS[j * 3 + a]; }
+      const t = Math.max(0.25, Math.min(1, (s - 0.45) / 0.4));
+      c.copy(ACCENT).multiplyScalar(0.95 * t);
+      lineCol.set([c.r, c.g, c.b, c.r * 0.45, c.g * 0.45, c.b * 0.45], k * 6);
+    });
+    lineGeo.attributes.position.needsUpdate = true; lineGeo.attributes.color.needsUpdate = true;
+    lines.visible = true;
+    goal.set(POS[i * 3], POS[i * 3 + 1], POS[i * 3 + 2]).multiplyScalar(0.7);
+    if (fly && !REDUCED) { tweenFrom.copy(target); tweenT = 0; } else { target.copy(goal); tweenT = 1; }
+  } else { lines.visible = false; }
+  // readout
+  if (i >= 0) {
+    rw.textContent = W[i];
+    rf.innerHTML = `said <span>${fmt(counts[i])}</span> times · <span>#${fmt(i + 1)}</span> by frequency`;
+    const r = ST.cos.random_mean;
+    rl.innerHTML = nbrs.map(([j, s]) => `<li><button type="button" data-i="${j}" aria-label="${esc(W[j])}, cosine ${s.toFixed(2)}"><span class="nw">${esc(W[j])}</span><span class="bar"><i style="width:${(Math.max(0, (s - r) / (1 - r)) * 100).toFixed(1)}%"></i></span><span class="cv">${s.toFixed(2)}</span></button></li>`).join('');
+    rn.innerHTML = `Cosine similarity in all ${D} dimensions. Bars start at <span>${r.toFixed(2)}</span>, what two random words score on average.`;
+  }
+  for (const b of document.querySelectorAll('.chip')) b.setAttribute('aria-pressed', String(b.dataset.w === W[i]));
+  measureBlocked(); rebuildShown(); dirty = true;
+}
+rl.addEventListener('click', (e) => { const b = e.target.closest('button[data-i]'); if (b) select(+b.dataset.i); });
+
+// ---------------------------------------------------------------- chips and search
+const chips = $('chips');
+for (const w of PROBES) {
+  if (!INDEX.has(w)) continue;
+  const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = w; b.dataset.w = w; b.setAttribute('aria-pressed', 'false');
+  b.addEventListener('click', () => select(INDEX.get(w)));
+  chips.appendChild(b);
+}
+const q = $('q'), sug = $('sug'), msg = $('msg');
+let sugList = [], sugAt = -1, msgTimer = 0;
+function say(t) { msg.textContent = t; msg.classList.add('on'); clearTimeout(msgTimer); msgTimer = setTimeout(() => msg.classList.remove('on'), 2600); }
+function matches(s) {
+  s = s.trim().toLowerCase().replace(/’/g, "'");
+  if (!s) return [];
+  const out = [];
+  for (let i = 0; i < N && out.length < 6; i++) if (W[i].startsWith(s)) out.push(i);   // W is sorted by frequency
+  return out;
+}
+function showSug() {
+  sugList = matches(q.value); sugAt = -1;
+  const exact = INDEX.get(q.value.trim().toLowerCase());
+  if (!sugList.length || (sugList.length === 1 && sugList[0] === exact)) { sug.classList.remove('on'); q.setAttribute('aria-expanded', 'false'); return; }
+  sug.innerHTML = sugList.map((i, k) => `<li role="option" id="sug-${k}" data-i="${i}" aria-selected="false">${esc(W[i])}<span>${fmt(counts[i])}</span></li>`).join('');
+  sug.classList.add('on'); q.setAttribute('aria-expanded', 'true');
+}
+function hideSug() { sug.classList.remove('on'); q.setAttribute('aria-expanded', 'false'); q.removeAttribute('aria-activedescendant'); }
+function pickSug(k) {
+  sugAt = k;
+  for (const [n, li] of [...sug.children].entries()) li.setAttribute('aria-selected', String(n === k));
+  if (k >= 0) q.setAttribute('aria-activedescendant', 'sug-' + k);
+}
+q.addEventListener('input', showSug);
+q.addEventListener('keydown', (e) => {
+  if (!sug.classList.contains('on')) return;
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); const n = sugList.length; pickSug(((sugAt + (e.key === 'ArrowDown' ? 1 : -1)) % n + n) % n); }
+  else if (e.key === 'Escape') { e.stopPropagation(); hideSug(); }
+});
+q.addEventListener('blur', () => setTimeout(hideSug, 120));
+sug.addEventListener('pointerdown', (e) => { const li = e.target.closest('li'); if (!li) return; e.preventDefault(); find(+li.dataset.i); });
+function find(i) { hideSug(); q.value = W[i]; select(i); }
+$('find').addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (sugAt >= 0 && sug.classList.contains('on')) return find(sugList[sugAt]);
+  const s = q.value.trim().toLowerCase().replace(/’/g, "'");
+  if (!s) return say('Type a word, e.g. crown');
+  if (INDEX.has(s)) return find(INDEX.get(s));
+  const m = matches(s);
+  if (m.length) return find(m[0]);
+  say(`“${s.slice(0, 24)}” is not among the ${fmt(N)} words`);
+});
+
+// ---------------------------------------------------------------- pointer: orbit, zoom, pick, hover
+const ptrs = new Map();
+let downAt = null, moved = false, pinch0 = 0, dist0 = 0;
+function nearest(x, y, radius) {
+  let best = -1, bd = radius * radius, bz = 2;
+  for (let i = 0; i < N; i++) {
+    project(i, tmp);
+    if (tmp[2] > 1) continue;
+    const dx = tmp[0] - x, dy = tmp[1] - y, d = dx * dx + dy * dy;
+    if (d < bd - 1e-6 || (Math.abs(d - bd) < 1e-6 && tmp[2] < bz)) { bd = d; best = i; bz = tmp[2]; }
+  }
+  return best;
+}
+canvas.addEventListener('pointerdown', (e) => {
+  canvas.setPointerCapture(e.pointerId);
+  ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (ptrs.size === 1) { downAt = [e.clientX, e.clientY]; moved = false; }
+  if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; pinch0 = Math.hypot(a[0] - b[0], a[1] - b[1]); dist0 = distGoal; moved = true; }
+  idleSince = performance.now();
+});
+canvas.addEventListener('pointermove', (e) => {
+  if (!ptrs.has(e.pointerId)) {
+    if (e.pointerType === 'mouse') { pendingHover = [e.clientX, e.clientY]; }
+    return;
+  }
+  const p = ptrs.get(e.pointerId), dx = e.clientX - p[0], dy = e.clientY - p[1];
+  ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+  if (ptrs.size === 2) {
+    const [a, b] = [...ptrs.values()]; const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
+    if (pinch0 > 0) distGoal = Math.max(5, Math.min(34, dist0 * pinch0 / d));
+  } else {
+    if (Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) { moved = true; canvas.classList.add('dragging'); }
+    if (moved) { az -= dx * 0.006; el = Math.max(-1.3, Math.min(1.3, el + dy * 0.006)); }
+  }
+  idleSince = performance.now(); dirty = true;
+});
+function up(e) {
+  if (!ptrs.has(e.pointerId)) return;
+  ptrs.delete(e.pointerId);
+  canvas.classList.remove('dragging');
+  if (ptrs.size === 0 && !moved && downAt) {
+    const i = nearest(e.clientX, e.clientY, e.pointerType === 'mouse' ? 14 : 24);
+    if (i >= 0) select(i);
+  }
+  if (ptrs.size < 2) pinch0 = 0;
+  idleSince = performance.now();
+}
+canvas.addEventListener('pointerup', up);
+canvas.addEventListener('pointercancel', up);
+canvas.addEventListener('pointerleave', () => { if (hover >= 0) { hover = -1; canvas.classList.remove('over'); rebuildShown(); dirty = true; } pendingHover = null; });
+canvas.addEventListener('wheel', (e) => { e.preventDefault(); distGoal = Math.max(5, Math.min(34, distGoal * Math.exp(e.deltaY * 0.0012))); idleSince = performance.now(); dirty = true; }, { passive: false });
+let pendingHover = null;
+
+// ---------------------------------------------------------------- loop
+let frames = 0;
+function frame(now) {
+  const dt = Math.min(0.05, (now - lastFrame) / 1000); lastFrame = now;
+  if (!REDUCED && ptrs.size === 0 && now - idleSince > 2500) { az += dt * 0.045; dirty = true; }
+  if (Math.abs(distGoal - dist) > 1e-3) { dist += (distGoal - dist) * (REDUCED ? 1 : Math.min(1, dt * 8)); dirty = true; }
+  if (tweenT < 1) {
+    tweenT = Math.min(1, tweenT + dt / 0.9);
+    const k = tweenT < 0.5 ? 4 * tweenT ** 3 : 1 - (-2 * tweenT + 2) ** 3 / 2;
+    target.lerpVectors(tweenFrom, goal, k); dirty = true;
+  }
+  if (pendingHover) {
+    const h = nearest(pendingHover[0], pendingHover[1], 12); pendingHover = null;
+    if (h !== hover) { hover = h; canvas.classList.toggle('over', h >= 0); rebuildShown(); dirty = true; }
+  }
+  if (dirty) { place(); renderer.render(scene, camera); drawLabels(); frames++; dirty = false; }
+  requestAnimationFrame(frame);
+}
+addEventListener('resize', resize);
+resize();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { widths.clear(); measureBlocked(); dirty = true; });
+select(INDEX.has('king') ? INDEX.get('king') : 0, false);   // opens on the first pre-registered probe
+requestAnimationFrame(frame);
+
+window.__embed = {
+  ready: true, n: N, dim: D,
+  neighbours: (w) => INDEX.has(w) ? neighbours(INDEX.get(w)).map(([j, s]) => [W[j], s]) : null,
+  select: (w) => select(INDEX.get(w)), get sel() { return sel >= 0 ? W[sel] : null; },
+  setView: (a, e, d) => { az = a; el = e; dist = distGoal = d; idleSince = performance.now() + 1e9; dirty = true; },
+  project: (w) => { project(INDEX.get(w), tmp); return [...tmp]; },
+  get frames() { return frames; }, setPanel,
+};
+})();
+</script>
+</body>
+</html>

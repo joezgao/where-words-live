@@ -1,0 +1,7 @@
+input.txt
+train/ckpt.npz
+train/data.json
+test/
+__pycache__/
+.DS_Store
+.tmp/

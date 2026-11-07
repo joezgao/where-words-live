@@ -1,0 +1,1237 @@
+{
+ "corpus": {
+  "tokens": 193931,
+  "types": 12348,
+  "vocab": 3000,
+  "dim": 48,
+  "coverage": 0.9162,
+  "min_count": 5,
+  "train_tokens": 168804,
+  "holdout_tokens": 8884
+ },
+ "train": {
+  "epochs": 15,
+  "pairs": 10865294,
+  "seconds": 135.8,
+  "window": 5,
+  "neg": 5,
+  "sample": 0.001,
+  "lr": 0.025,
+  "batch": 256,
+  "seed": 20261106,
+  "kept_per_epoch": 120706,
+  "train_loss_first": 2.939,
+  "train_loss_final": 2.5,
+  "held_loss_init": 4.159,
+  "held_loss_ep1": 2.748,
+  "held_loss_best": 2.667,
+  "held_loss_final": 2.669
+ },
+ "gradcheck": {
+  "rel_err_in": 1.1828776146852222e-09,
+  "rel_err_out": 5.589525555739616e-10
+ },
+ "pca": {
+  "var3": 0.2619,
+  "var_each": [
+   0.1104,
+   0.0778,
+   0.0738
+  ],
+  "ends": [
+   {
+    "low": [
+     "fare",
+     "pompey",
+     "petruchio",
+     "hic",
+     "gremio",
+     "biondello",
+     "troth",
+     "advise"
+    ],
+    "low_loc": 0.7924,
+    "high": [
+     "cheeks",
+     "flood",
+     "fiery",
+     "hollow",
+     "bright",
+     "fatal",
+     "sceptre",
+     "glory"
+    ],
+    "high_loc": 0.4147,
+    "low_group": {
+     "pct_w05": 100.0,
+     "share": 0.5512,
+     "start": 0.875,
+     "end": 0.975,
+     "play": "The Taming of the Shrew",
+     "play_part": 1.0,
+     "pct": 100.0,
+     "pct_w15": 100.0
+    },
+    "high_group": {
+     "pct_w05": 91.0,
+     "share": 0.2477,
+     "start": 0.532,
+     "end": 0.632,
+     "play": "3 Henry VI",
+     "play_part": 1.0,
+     "pct": 84.5,
+     "pct_w15": 90.9
+    }
+   },
+   {
+    "low": [
+     "in't",
+     "big",
+     "report",
+     "ignorant",
+     "accused",
+     "fancy",
+     "nose",
+     "thief"
+    ],
+    "low_loc": 0.4101,
+    "high": [
+     "post",
+     "george",
+     "london",
+     "norfolk",
+     "amain",
+     "march",
+     "towards",
+     "lancaster"
+    ],
+    "high_loc": 0.5104,
+    "low_group": {
+     "pct_w05": 88.9,
+     "share": 0.2683,
+     "start": 0.654,
+     "end": 0.754,
+     "play": "The Winter's Tale",
+     "play_part": 1.0,
+     "pct": 92.5,
+     "pct_w15": 96.6
+    },
+    "high_group": {
+     "pct_w05": 99.4,
+     "share": 0.4119,
+     "start": 0.527,
+     "end": 0.627,
+     "play": "3 Henry VI",
+     "play_part": 1.0,
+     "pct": 100.0,
+     "pct_w15": 100.0
+    }
+   },
+   {
+    "low": [
+     "kill'd",
+     "child",
+     "rosaline",
+     "cursed",
+     "husband",
+     "villain",
+     "kinsman",
+     "wast"
+    ],
+    "low_loc": 0.4514,
+    "high": [
+     "tribunes",
+     "patricians",
+     "volsces",
+     "honours",
+     "weapons",
+     "tongues",
+     "lartius",
+     "wives"
+    ],
+    "high_loc": 0.65,
+    "low_group": {
+     "pct_w05": 99.5,
+     "share": 0.341,
+     "start": 0.404,
+     "end": 0.504,
+     "play": "Romeo and Juliet",
+     "play_part": 1.0,
+     "pct": 99.5,
+     "pct_w15": 98.9
+    },
+    "high_group": {
+     "pct_w05": 100.0,
+     "share": 0.6062,
+     "start": 0.009,
+     "end": 0.109,
+     "play": "Coriolanus",
+     "play_part": 1.0,
+     "pct": 100.0,
+     "pct_w15": 100.0
+    }
+   }
+  ],
+  "loc": {
+   "window": 0.1,
+   "random300": 0.4054,
+   "vocab_mean": 0.41,
+   "group8_p95": 0.5264,
+   "group8_p99": 0.5868
+  },
+  "group": {
+   "window": 0.1,
+   "groups": 10000,
+   "seed": 0,
+   "random_mean": 0.2123,
+   "random_p95": 0.2812,
+   "random_p99": 0.3278,
+   "by_window": {
+    "0.05": {
+     "p95": 0.2029,
+     "p99": 0.2371
+    },
+    "0.10": {
+     "p95": 0.2812,
+     "p99": 0.3278
+    },
+    "0.15": {
+     "p95": 0.3481,
+     "p99": 0.3939
+    }
+   },
+   "plays": [
+    {
+     "play": "Coriolanus",
+     "start": 0.0
+    },
+    {
+     "play": "Richard III",
+     "start": 0.1368
+    },
+    {
+     "play": "Richard II",
+     "start": 0.279
+    },
+    {
+     "play": "Romeo and Juliet",
+     "start": 0.3917
+    },
+    {
+     "play": "3 Henry VI",
+     "start": 0.5145
+    },
+    {
+     "play": "The Winter's Tale",
+     "start": 0.6327
+    },
+    {
+     "play": "Measure for Measure",
+     "start": 0.7581
+    },
+    {
+     "play": "The Taming of the Shrew",
+     "start": 0.8653
+    },
+    {
+     "play": "The Tempest",
+     "start": 0.9693
+    }
+   ]
+  }
+ },
+ "fp16": {
+  "lists_unchanged": 2984,
+  "lists_one_swap": 16,
+  "max_changed": 1,
+  "mean_changed": 0.005
+ },
+ "cos": {
+  "random_mean": 0.493,
+  "random_p99": 0.797,
+  "tenth_nn_median": 0.796
+ },
+ "analogies": [
+  {
+   "q": [
+    "man",
+    "king",
+    "woman",
+    "queen"
+   ],
+   "rank": 28,
+   "top5": [
+    "supposed",
+    "lewis",
+    "fourth",
+    "margaret",
+    "oracle"
+   ],
+   "hit": false
+  },
+  {
+   "q": [
+    "man",
+    "father",
+    "woman",
+    "mother"
+   ],
+   "rank": 291,
+   "top5": [
+    "elder",
+    "eldest",
+    "princely",
+    "younger",
+    "supposed"
+   ],
+   "hit": false
+  },
+  {
+   "q": [
+    "he",
+    "his",
+    "she",
+    "her"
+   ],
+   "rank": 1,
+   "top5": [
+    "her",
+    "pure",
+    "princess",
+    "smiles",
+    "statue"
+   ],
+   "hit": true
+  },
+  {
+   "q": [
+    "son",
+    "father",
+    "daughter",
+    "mother"
+   ],
+   "rank": 85,
+   "top5": [
+    "katharina",
+    "youngest",
+    "sister",
+    "dowry",
+    "lady"
+   ],
+   "hit": false
+  },
+  {
+   "q": [
+    "brother",
+    "sister",
+    "son",
+    "daughter"
+   ],
+   "rank": 19,
+   "top5": [
+    "wife",
+    "minola",
+    "eldest",
+    "guest",
+    "agree"
+   ],
+   "hit": false
+  },
+  {
+   "q": [
+    "lord",
+    "lady",
+    "king",
+    "queen"
+   ],
+   "rank": 15,
+   "top5": [
+    "virtuous",
+    "bona",
+    "marriage",
+    "lewis",
+    "beauteous"
+   ],
+   "hit": false
+  },
+  {
+   "q": [
+    "day",
+    "night",
+    "sun",
+    "moon"
+   ],
+   "rank": 6,
+   "top5": [
+    "breaks",
+    "through",
+    "waking",
+    "close",
+    "groans"
+   ],
+   "hit": false
+  },
+  {
+   "q": [
+    "thou",
+    "thy",
+    "you",
+    "your"
+   ],
+   "rank": 1,
+   "top5": [
+    "your",
+    "my",
+    "heartily",
+    "humbly",
+    "notice"
+   ],
+   "hit": true
+  }
+ ],
+ "analogy_hits": 2,
+ "analogy_total": 8,
+ "probes_missing": [],
+ "neighbours": {
+  "king": [
+   [
+    "claim",
+    0.7637
+   ],
+   [
+    "lewis",
+    0.7462
+   ],
+   [
+    "dukedom",
+    0.7328
+   ],
+   [
+    "lawful",
+    0.7246
+   ],
+   [
+    "crown'd",
+    0.7217
+   ],
+   [
+    "plantagenet",
+    0.715
+   ],
+   [
+    "richard",
+    0.7131
+   ],
+   [
+    "harry",
+    0.7049
+   ],
+   [
+    "commands",
+    0.6997
+   ],
+   [
+    "seated",
+    0.6963
+   ]
+  ],
+  "queen": [
+   [
+    "margaret",
+    0.7383
+   ],
+   [
+    "england's",
+    0.734
+   ],
+   [
+    "bona",
+    0.7303
+   ],
+   [
+    "queen's",
+    0.7039
+   ],
+   [
+    "princely",
+    0.6852
+   ],
+   [
+    "virtuous",
+    0.6829
+   ],
+   [
+    "marriage",
+    0.6803
+   ],
+   [
+    "entreaties",
+    0.6748
+   ],
+   [
+    "acquaint",
+    0.6733
+   ],
+   [
+    "crown'd",
+    0.673
+   ]
+  ],
+  "love": [
+   [
+    "protest",
+    0.7005
+   ],
+   [
+    "forgive",
+    0.6955
+   ],
+   [
+    "hate",
+    0.694
+   ],
+   [
+    "cherish",
+    0.6585
+   ],
+   [
+    "recompense",
+    0.6486
+   ],
+   [
+    "devotion",
+    0.6448
+   ],
+   [
+    "heart's",
+    0.6448
+   ],
+   [
+    "modesty",
+    0.6427
+   ],
+   [
+    "burden",
+    0.634
+   ],
+   [
+    "pure",
+    0.6332
+   ]
+  ],
+  "night": [
+   [
+    "morning",
+    0.7221
+   ],
+   [
+    "morrow",
+    0.6941
+   ],
+   [
+    "wedding",
+    0.6702
+   ],
+   [
+    "light",
+    0.6656
+   ],
+   [
+    "blunt",
+    0.6598
+   ],
+   [
+    "neighbour",
+    0.652
+   ],
+   [
+    "waking",
+    0.6482
+   ],
+   [
+    "captain",
+    0.6475
+   ],
+   [
+    "church",
+    0.6475
+   ],
+   [
+    "repose",
+    0.6464
+   ]
+  ],
+  "romeo": [
+   [
+    "tybalt",
+    0.7865
+   ],
+   [
+    "juliet",
+    0.7362
+   ],
+   [
+    "banished",
+    0.7195
+   ],
+   [
+    "alive",
+    0.704
+   ],
+   [
+    "conjure",
+    0.7034
+   ],
+   [
+    "romeo's",
+    0.6889
+   ],
+   [
+    "dog",
+    0.6797
+   ],
+   [
+    "mercutio",
+    0.6779
+   ],
+   [
+    "murderer",
+    0.6709
+   ],
+   [
+    "arise",
+    0.6696
+   ]
+  ],
+  "thou": [
+   [
+    "thyself",
+    0.745
+   ],
+   [
+    "dost",
+    0.7399
+   ],
+   [
+    "art",
+    0.7329
+   ],
+   [
+    "wilt",
+    0.7304
+   ],
+   [
+    "liest",
+    0.706
+   ],
+   [
+    "hast",
+    0.7055
+   ],
+   [
+    "varlet",
+    0.7006
+   ],
+   [
+    "wouldst",
+    0.6869
+   ],
+   [
+    "wert",
+    0.6807
+   ],
+   [
+    "comest",
+    0.6746
+   ]
+  ],
+  "sword": [
+   [
+    "seize",
+    0.7269
+   ],
+   [
+    "bending",
+    0.7096
+   ],
+   [
+    "gage",
+    0.7095
+   ],
+   [
+    "hands",
+    0.6958
+   ],
+   [
+    "executioner",
+    0.6839
+   ],
+   [
+    "pack",
+    0.6719
+   ],
+   [
+    "hereford's",
+    0.6709
+   ],
+   [
+    "weight",
+    0.669
+   ],
+   [
+    "resolution",
+    0.6614
+   ],
+   [
+    "wrath",
+    0.6596
+   ]
+  ],
+  "death": [
+   [
+    "wretched",
+    0.6772
+   ],
+   [
+    "exile",
+    0.6721
+   ],
+   [
+    "gloucester's",
+    0.6625
+   ],
+   [
+    "sight",
+    0.6559
+   ],
+   [
+    "dark",
+    0.6388
+   ],
+   [
+    "hateful",
+    0.6388
+   ],
+   [
+    "wanting",
+    0.632
+   ],
+   [
+    "life",
+    0.6302
+   ],
+   [
+    "fearing",
+    0.6283
+   ],
+   [
+    "cruel",
+    0.6219
+   ]
+  ],
+  "man": [
+   [
+    "example",
+    0.7082
+   ],
+   [
+    "sooner",
+    0.7045
+   ],
+   [
+    "cat",
+    0.6689
+   ],
+   [
+    "beard",
+    0.6679
+   ],
+   [
+    "frantic",
+    0.6672
+   ],
+   [
+    "month",
+    0.6642
+   ],
+   [
+    "rascal",
+    0.6628
+   ],
+   [
+    "soldier",
+    0.6597
+   ],
+   [
+    "damnable",
+    0.6592
+   ],
+   [
+    "question",
+    0.6529
+   ]
+  ],
+  "woman": [
+   [
+    "respected",
+    0.7896
+   ],
+   [
+    "humour",
+    0.7566
+   ],
+   [
+    "frantic",
+    0.7505
+   ],
+   [
+    "peevish",
+    0.7369
+   ],
+   [
+    "wrong'd",
+    0.7256
+   ],
+   [
+    "elder",
+    0.7197
+   ],
+   [
+    "flower",
+    0.7113
+   ],
+   [
+    "wench",
+    0.7078
+   ],
+   [
+    "mad",
+    0.7062
+   ],
+   [
+    "damnable",
+    0.7029
+   ]
+  ],
+  "father": [
+   [
+    "ghostly",
+    0.7674
+   ],
+   [
+    "meaning",
+    0.7517
+   ],
+   [
+    "brother",
+    0.7494
+   ],
+   [
+    "uncles",
+    0.7445
+   ],
+   [
+    "princely",
+    0.7436
+   ],
+   [
+    "grandfather",
+    0.7366
+   ],
+   [
+    "kinsman",
+    0.7277
+   ],
+   [
+    "saved",
+    0.7185
+   ],
+   [
+    "heir",
+    0.7155
+   ],
+   [
+    "son",
+    0.7143
+   ]
+  ],
+  "lord": [
+   [
+    "buckingham",
+    0.7489
+   ],
+   [
+    "berkeley",
+    0.7464
+   ],
+   [
+    "catesby",
+    0.7001
+   ],
+   [
+    "hastings",
+    0.694
+   ],
+   [
+    "liege",
+    0.6866
+   ],
+   [
+    "dorset",
+    0.6771
+   ],
+   [
+    "ely",
+    0.6767
+   ],
+   [
+    "stanley",
+    0.6767
+   ],
+   [
+    "ratcliff",
+    0.6712
+   ],
+   [
+    "protector",
+    0.6691
+   ]
+  ],
+  "heaven": [
+   [
+    "stars",
+    0.7134
+   ],
+   [
+    "earth",
+    0.6965
+   ],
+   [
+    "bar",
+    0.6601
+   ],
+   [
+    "form",
+    0.6558
+   ],
+   [
+    "safe",
+    0.6461
+   ],
+   [
+    "smile",
+    0.6409
+   ],
+   [
+    "sees",
+    0.6397
+   ],
+   [
+    "food",
+    0.6391
+   ],
+   [
+    "despite",
+    0.6386
+   ],
+   [
+    "moon",
+    0.6375
+   ]
+  ],
+  "good": [
+   [
+    "joyful",
+    0.7245
+   ],
+   [
+    "neighbour",
+    0.6575
+   ],
+   [
+    "trusty",
+    0.6489
+   ],
+   [
+    "gall",
+    0.6427
+   ],
+   [
+    "licio",
+    0.6414
+   ],
+   [
+    "comfort",
+    0.6381
+   ],
+   [
+    "bless",
+    0.6354
+   ],
+   [
+    "cock",
+    0.6277
+   ],
+   [
+    "dorset",
+    0.6271
+   ],
+   [
+    "it's",
+    0.6247
+   ]
+  ],
+  "day": [
+   [
+    "wedding",
+    0.7253
+   ],
+   [
+    "woful",
+    0.714
+   ],
+   [
+    "lamentable",
+    0.6986
+   ],
+   [
+    "morrow",
+    0.6761
+   ],
+   [
+    "night",
+    0.6413
+   ],
+   [
+    "morning",
+    0.6397
+   ],
+   [
+    "journey",
+    0.6331
+   ],
+   [
+    "alack",
+    0.6184
+   ],
+   [
+    "counsel",
+    0.6171
+   ],
+   [
+    "sun",
+    0.6154
+   ]
+  ],
+  "eyes": [
+   [
+    "tears",
+    0.7683
+   ],
+   [
+    "lovers",
+    0.76
+   ],
+   [
+    "infect",
+    0.7546
+   ],
+   [
+    "water",
+    0.7468
+   ],
+   [
+    "griefs",
+    0.745
+   ],
+   [
+    "weeping",
+    0.738
+   ],
+   [
+    "salt",
+    0.7342
+   ],
+   [
+    "rain",
+    0.7325
+   ],
+   [
+    "ripe",
+    0.7318
+   ],
+   [
+    "dried",
+    0.7262
+   ]
+  ],
+  "blood": [
+   [
+    "veins",
+    0.7204
+   ],
+   [
+    "stain'd",
+    0.7151
+   ],
+   [
+    "shed",
+    0.6967
+   ],
+   [
+    "dust",
+    0.6955
+   ],
+   [
+    "cries",
+    0.6798
+   ],
+   [
+    "sepulchre",
+    0.6794
+   ],
+   [
+    "sway",
+    0.6781
+   ],
+   [
+    "purple",
+    0.6779
+   ],
+   [
+    "dearest",
+    0.6765
+   ],
+   [
+    "story",
+    0.6621
+   ]
+  ],
+  "crown": [
+   [
+    "resign",
+    0.7652
+   ],
+   [
+    "kingly",
+    0.7506
+   ],
+   [
+    "falsehood",
+    0.7377
+   ],
+   [
+    "henry",
+    0.7229
+   ],
+   [
+    "claim",
+    0.7161
+   ],
+   [
+    "english",
+    0.7121
+   ],
+   [
+    "fourth",
+    0.7016
+   ],
+   [
+    "heirs",
+    0.7015
+   ],
+   [
+    "heir",
+    0.6993
+   ],
+   [
+    "seated",
+    0.695
+   ]
+  ],
+  "sweet": [
+   [
+    "bridal",
+    0.7041
+   ],
+   [
+    "gentle",
+    0.6819
+   ],
+   [
+    "isabella",
+    0.6762
+   ],
+   [
+    "sour",
+    0.6762
+   ],
+   [
+    "burden",
+    0.6582
+   ],
+   [
+    "prime",
+    0.6569
+   ],
+   [
+    "careful",
+    0.6543
+   ],
+   [
+    "conduct",
+    0.6503
+   ],
+   [
+    "witch",
+    0.6498
+   ],
+   [
+    "blessing",
+    0.644
+   ]
+  ],
+  "juliet": [
+   [
+    "county",
+    0.8422
+   ],
+   [
+    "paris",
+    0.8235
+   ],
+   [
+    "nurse",
+    0.7724
+   ],
+   [
+    "weeps",
+    0.7405
+   ],
+   [
+    "romeo",
+    0.7362
+   ],
+   [
+    "tybalt",
+    0.7222
+   ],
+   [
+    "arise",
+    0.7133
+   ],
+   [
+    "lady's",
+    0.7111
+   ],
+   [
+    "cords",
+    0.7096
+   ],
+   [
+    "verona",
+    0.7072
+   ]
+  ]
+ }
+}

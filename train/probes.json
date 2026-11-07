@@ -1,0 +1,16 @@
+{
+  "_note": "Written before any training run (2026-11-06). Not edited after seeing results. Probes whose word falls outside the vocabulary are reported as missing, not replaced.",
+  "probes": ["king", "queen", "love", "night", "romeo", "thou", "sword", "death", "man", "woman",
+             "father", "lord", "heaven", "good", "day", "eyes", "blood", "crown", "sweet", "juliet"],
+  "analogies": [
+    ["man", "king", "woman", "queen"],
+    ["man", "father", "woman", "mother"],
+    ["he", "his", "she", "her"],
+    ["son", "father", "daughter", "mother"],
+    ["brother", "sister", "son", "daughter"],
+    ["lord", "lady", "king", "queen"],
+    ["day", "night", "sun", "moon"],
+    ["thou", "thy", "you", "your"]
+  ],
+  "_analogy_rule": "For [a, b, c, d]: is d the nearest word (cosine, full space, unit vectors) to b - a + c, excluding a, b, c? Report the rank of d."
+}
