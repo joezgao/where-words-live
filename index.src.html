@@ -226,13 +226,14 @@ button{font:500 13px/1 var(--sans);letter-spacing:.02em;border:0;border-radius:9
 </div>
 <div class="fallback" id="fallback">This piece needs WebGL, which this browser has turned off.</div>
 
-<script type="application/json" id="data">/*DATA*/</script>
-<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="words-data.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js" defer></script>
 <script>
-(() => {
+// The data and three.js are deferred so the words above paint first; both have run by DOMContentLoaded.
+document.addEventListener("DOMContentLoaded", () => {
 'use strict';
 const $ = (id) => document.getElementById(id);
-const DATA = JSON.parse($('data').textContent);
+const DATA = window.WWL_DATA;
 const ST = DATA.stats;
 const W = DATA.words, N = W.length, D = DATA.dim;
 const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -673,7 +674,7 @@ window.__embed = {
   project: (w) => { project(INDEX.get(w), tmp); return [...tmp]; },
   get frames() { return frames; }, setPanel,
 };
-})();
+});
 </script>
 </body>
 </html>

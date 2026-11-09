@@ -1,5 +1,5 @@
-"""index.src.html + train/data.json + train/probes.json -> index.html (one file, with the data
-inlined; three.js still loads from cdn.jsdelivr.net, and the page says so quietly if it does not).
+"""index.src.html + train/data.json + train/probes.json -> index.html + words-data.js (the page, and its data
+loaded deferred; three.js still loads from cdn.jsdelivr.net, and the page says so quietly if it does not).
 Numbers in the static text are filled from train/summary.json, never typed by hand. The few
 sentences written by hand about the results are checked against summary.json below, so a
 retrain that changes them stops the build instead of shipping stale prose."""
@@ -34,7 +34,8 @@ assert (summ['analogy_hits'], next(a['rank'] for a in summ['analogies'] if a['q'
 assert 1 <= summ['analogy_hits'] < summ['analogy_total'] / 2, '"mostly fails"'
 assert any(a['q'][1] == 'king' and a['q'][2] == 'woman' and not a['hit'] for a in st['analogies'])
 assert set(['king', 'love', 'night', 'romeo', 'thou', 'sword']) <= set(data['probes']), 'chips are pre-registered probes'
-blob = json.dumps(data, separators=(',', ':')).replace('</', '<\\/')
-out = src.replace('/*DATA*/', blob)
-open(os.path.join(HERE, 'index.html'), 'w').write(out)
-print('index.html', os.path.getsize(os.path.join(HERE, 'index.html')), 'bytes')
+blob = json.dumps(data, separators=(',', ':'))
+# the data lives in its own file, loaded after the page has painted (2026-11-09; was inlined at /*DATA*/)
+open(os.path.join(HERE, 'words-data.js'), 'w').write('window.WWL_DATA = ' + blob + ';\n')
+open(os.path.join(HERE, 'index.html'), 'w').write(src)
+for f in ('index.html', 'words-data.js'): print(f, os.path.getsize(os.path.join(HERE, f)), 'bytes')
