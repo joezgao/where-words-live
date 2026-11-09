@@ -6,6 +6,8 @@
 
 Skip-gram word2vec with negative sampling, trained from scratch in NumPy on tiny-shakespeare. The 3,000 most common words are shown as points in 3D. Pick a word, by clicking, searching or tapping a chip, to see its ten nearest neighbours with their cosine values. Lines join the word to those neighbours.
 
+**Live:** [joezgao.github.io/where-words-live/](https://joezgao.github.io/where-words-live/) (nothing to install).
+
 Open `index.html` in a recent browser. Keep `words-data.js` next to it: the page is 45 kB and the vectors and vocabulary (447 kB) load from `words-data.js` after the words have painted (split on 2026-11-09; mobile Lighthouse, localhost, uncompressed: performance 89 → 100, first paint 3.0 s → 0.9 s). It is not self-contained: three.js 0.147.0 loads from cdn.jsdelivr.net (and the Lora/Inter fonts from Google Fonts, with system fallbacks). If three.js does not arrive, the page keeps its header and How it works panel and shows a quiet grey line saying the 3D view could not load.
 
 ## What it shows, and what it does not
