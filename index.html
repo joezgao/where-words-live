@@ -180,6 +180,9 @@ button{font:500 13px/1 var(--sans);letter-spacing:.02em;border:0;border-radius:9
   .read li button{min-height:26px}
 }
 @media (prefers-reduced-motion: reduce){ *{transition:none!important;animation:none!important} }
+  /* craft floor (DESIGN.md 11/9): neutral text selection, press feedback */
+  ::selection{background:rgba(128,128,128,.35)}
+  button:active:not(:disabled){filter:brightness(.85)}
 </style>
 </head>
 <body>
