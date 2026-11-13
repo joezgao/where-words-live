@@ -275,9 +275,9 @@ function neighbours(i, k = 10) {
 
 // ---------------------------------------------------------------- text from the training log
 $('meta').innerHTML = [
-  `skip-gram · negative sampling`,
-  `<span>${fmt(ST.corpus.vocab)}</span> words · <span>${ST.corpus.dim}</span> dimensions`,
-  `<span>${fmt(ST.corpus.tokens)}</span> words of text · <span>${ST.train.epochs}</span> passes`,
+  `skip-gram, negative sampling`,
+  `<span>${fmt(ST.corpus.vocab)}</span> words, <span>${ST.corpus.dim}</span> dimensions`,
+  `<span>${fmt(ST.corpus.tokens)}</span> words of text, <span>${ST.train.epochs}</span> passes`,
   `<span class="wide">3D: PCA, keeps <span>${pct(ST.pca.var3, 0)}</span> of the variance</span>`,
 ].map((l) => `<div>${l}</div>`).join('');
 
@@ -314,7 +314,7 @@ ${an.map((a) => `<tr><td>${esc(a.q[1])} − ${esc(a.q[0])} + ${esc(a.q[2])} → 
 <p>Tomas Mikolov, Ilya Sutskever, Kai Chen, Greg Corrado, Jeffrey Dean. <i>Distributed Representations of Words and Phrases and their Compositionality.</i> 2013. arXiv:1310.4546. (Negative sampling and the thinning of common words.)</p>
 <p>Text: tiny-shakespeare, from Andrej Karpathy's char-rnn. Drawn with three.js.</p>
 </div>
-<p class="keys"><kbd>/</kbd> find a word · drag to turn · scroll or pinch to zoom · <kbd>Esc</kbd> closes this</p>`;
+<p class="keys"><kbd>/</kbd> find a word, drag to turn, scroll or pinch to zoom, <kbd>Esc</kbd> closes this</p>`;
 
 // ---------------------------------------------------------------- panel
 const panel = $('panel'), made = $('made');
@@ -528,7 +528,7 @@ function select(i, fly = true) {
   // readout
   if (i >= 0) {
     rw.textContent = W[i];
-    rf.innerHTML = `said <span>${fmt(counts[i])}</span> times · <span>#${fmt(i + 1)}</span> by frequency`;
+    rf.innerHTML = `said <span>${fmt(counts[i])}</span> times, <span>#${fmt(i + 1)}</span> by frequency`;
     const r = ST.cos.random_mean;
     rl.innerHTML = nbrs.map(([j, s]) => `<li><button type="button" data-i="${j}" aria-label="${esc(W[j])}, cosine ${s.toFixed(2)}"><span class="nw">${esc(W[j])}</span><span class="bar"><i style="width:${(Math.max(0, (s - r) / (1 - r)) * 100).toFixed(1)}%"></i></span><span class="cv">${s.toFixed(2)}</span></button></li>`).join('');
     rn.innerHTML = `Cosine similarity in all ${D} dimensions. Bars start at <span>${r.toFixed(2)}</span>, what two random words score on average.`;
