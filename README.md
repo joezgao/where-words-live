@@ -151,7 +151,7 @@ curl -o input.txt https://raw.githubusercontent.com/karpathy/char-rnn/master/dat
 cd train && python3 gradcheck.py && python3 train.py && python3 export.py && cd .. && python3 build.py
 ```
 
-Training is deterministic with the fixed seed and took 136 s on 2 shared CPU cores. `build.py` fills the page's numbers from `train/summary.json` and stops the build if a hand-written sentence about the results no longer matches the data. The text used here has md5 `6fb458f1232090904fb40fe944165e91`.
+Training is deterministic with the fixed seed and took 136 s on 2 shared CPU cores; a rebuild on an Apple M5 Pro took 24 s and gave byte-identical vectors (2026-11-13). `build.py` fills the page's numbers from `train/summary.json` and stops the build if a hand-written sentence about the results no longer matches the data. The text used here has md5 `6fb458f1232090904fb40fe944165e91`.
 
 ## Credits
 
