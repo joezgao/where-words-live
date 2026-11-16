@@ -81,7 +81,7 @@ button{font:500 13px/1 var(--sans);letter-spacing:.02em;border:0;border-radius:9
 .sug li[aria-selected="true"],.sug li:hover{background:var(--accent-soft);color:var(--accent)}
 .msg{position:absolute;left:16px;bottom:calc(100% + 8px);font-size:11.5px;color:var(--dim);white-space:nowrap;opacity:0;transition:opacity .3s}
 .msg.on{opacity:1}
-.chips{pointer-events:auto;display:flex;gap:4px;flex-wrap:wrap;justify-content:center;align-items:center}
+.chips{pointer-events:auto;min-height:28px;display:flex;gap:4px;flex-wrap:wrap;justify-content:center;align-items:center}
 .chips .lbl{font-size:11px;letter-spacing:.04em;color:var(--mute);margin-right:4px}
 .chip{font:500 12px/1 var(--sans);padding:8px 10px;color:var(--dim);background:none}
 .chip:hover{color:var(--fg)}
@@ -196,7 +196,7 @@ button{font:500 13px/1 var(--sans);letter-spacing:.02em;border:0;border-radius:9
       <span class="wide">Pick a word to see its ten nearest neighbours. They are measured in all 48 dimensions; this 3D view is only a shadow, so some lines run long.</span>
     </p>
   </div>
-  <div class="meta"><div id="meta"></div><button class="made" id="made" aria-expanded="false" aria-controls="panel">How it works</button></div>
+  <div class="meta"><div id="meta"><div>skip-gram, negative sampling</div><div><span>3,000</span> words, <span>48</span> dimensions</div><div><span>193,931</span> words of text, <span>15</span> passes</div><div><span class="wide">3D: PCA, keeps <span>26%</span> of the variance</span></div></div><button class="made" id="made" aria-expanded="false" aria-controls="panel">How it works</button></div>
 </header>
 
 <section class="read" id="read" aria-live="polite" aria-label="Nearest neighbours">
