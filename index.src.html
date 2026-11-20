@@ -158,6 +158,10 @@ button{font:500 13px/1 var(--sans);letter-spacing:.02em;border:0;border-radius:9
   .dock{padding:0 max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));gap:8px}
   .chips{flex-wrap:nowrap;overflow-x:auto;max-width:100%;justify-content:flex-start;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
+  /* 44px touch targets without moving anything: the scroller grows 8px each way (cancelled by margin) so the chips' ::after is not clipped */
+  .chips{min-height:44px;padding:8px 0;margin:-8px 0}
+  .chip{position:relative}
+  .chip::after{content:"";position:absolute;inset:-8px 0}
   .find input{width:calc(100vw - 32px - 70px);min-width:0}
   .sug{width:100%}
   button{padding:10px 13px;font-size:12.5px}
